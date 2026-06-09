@@ -108,6 +108,9 @@ class MarkdownParser:
                 heading_text = ""
                 if i + 1 < len(tokens) and tokens[i + 1].type == "inline":
                     heading_text = self._extract_plain_text(tokens[i + 1])
+                    i += 1  # consume the inline token so it isn't re-processed as a paragraph
+                if i + 1 < len(tokens) and tokens[i + 1].type == "heading_close":
+                    i += 1  # consume heading_close
                 pending_heading = (heading_text, level)
                 current_blocks = []
 
@@ -262,47 +265,72 @@ class MarkdownParser:
             return children
 
         idx = 0
-        while idx < len(token.children):
-            child = token.children[idx]
+        toks = token.children
+        while idx < len(toks):
+            child = toks[idx]
 
             if child.type == "text":
-                text = child.content
-                if text:
-                    children.append(InlineModel(type="text", text=text))
+                if child.content:
+                    children.append(InlineModel(type="text", text=child.content))
 
-            elif child.type == "strong":
-                text = self._extract_plain_text(child)
-                if text:
-                    children.append(InlineModel(type="bold", text=text))
+            elif child.type == "softbreak":
+                children.append(InlineModel(type="text", text=" "))
 
-            elif child.type == "em":
-                text = self._extract_plain_text(child)
-                if text:
-                    children.append(InlineModel(type="italic", text=text))
-
-            elif child.type == "code":
+            elif child.type == "code_inline":
                 children.append(InlineModel(type="code", text=child.content))
 
-            elif child.type == "s":
-                text = self._extract_plain_text(child)
+            elif child.type == "strong_open":
+                text, idx = self._collect_span_text(toks, idx + 1, "strong_close")
+                if text:
+                    children.append(InlineModel(type="bold", text=text))
+                continue  # idx already at close token
+
+            elif child.type == "em_open":
+                text, idx = self._collect_span_text(toks, idx + 1, "em_close")
+                if text:
+                    children.append(InlineModel(type="italic", text=text))
+                continue
+
+            elif child.type == "s_open":
+                text, idx = self._collect_span_text(toks, idx + 1, "s_close")
                 if text:
                     children.append(InlineModel(type="strikethrough", text=text))
+                continue
 
             elif child.type == "link_open":
                 url = child.attrs.get("href", "") if child.attrs else ""
-                link_text = self._collect_link_text(token.children, idx + 1)
-                children.append(
-                    InlineModel(type="link", text=link_text, url=url),
-                )
+                link_text = self._collect_link_text(toks, idx + 1)
+                children.append(InlineModel(type="link", text=link_text, url=url))
 
             elif child.type == "image":
                 src = child.attrs.get("src", "") if child.attrs else ""
                 alt = child.attrs.get("alt", "") if child.attrs else ""
                 children.append(InlineModel(type="image", text="", url=src, alt=alt))
 
+            # skip close tokens (strong_close, em_close, s_close, link_close, etc.)
+
             idx += 1
 
         return children
+
+    @staticmethod
+    def _collect_span_text(toks: list, start: int, close_type: str) -> tuple[str, int]:
+        """Collect plain text between *start* and the next *close_type* token.
+
+        Returns ``(text, close_idx)``.
+        """
+        parts: list[str] = []
+        i = start
+        while i < len(toks) and toks[i].type != close_type:
+            t = toks[i]
+            if t.type == "text":
+                parts.append(t.content)
+            elif t.type == "code_inline":
+                parts.append(t.content)
+            elif t.type == "softbreak":
+                parts.append(" ")
+            i += 1
+        return "".join(parts), i
 
     @staticmethod
     def _collect_link_text(children: list, start: int) -> str:
