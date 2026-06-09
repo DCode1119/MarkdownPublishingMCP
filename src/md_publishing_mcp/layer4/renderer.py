@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
 import re
 import shutil
 import subprocess
 import tempfile
 import threading
 import time
+import urllib.request
 import uuid
 from pathlib import Path
 
@@ -54,12 +57,19 @@ class PdfRenderer:
         cache_ttl: int = 600,
         max_cached: int = 20,
         render_timeout: float = 120.0,
+        typst_binary: str | None = None,
     ) -> None:
         self.cache_ttl = cache_ttl
         self.max_cached = max_cached
         self.render_timeout = render_timeout
         self._cache: dict[str, tuple[RenderResult, float]] = {}
         self._lock = threading.Lock()
+        # Resolve typst binary: constructor arg > TYPST_BINARY env > "typst"
+        self._binary = (
+            typst_binary
+            or os.environ.get("TYPST_BINARY")
+            or "typst"
+        )
 
     # ── Public API ───────────────────────────────────────────────────
 
@@ -86,17 +96,20 @@ class PdfRenderer:
         typ_file = work_dir / "main.typ"
         pdf_file = work_dir / "output.pdf"
 
+        # Download remote images referenced in the Typst source into work_dir
+        typst_source = self._localise_remote_images(typst_source, work_dir)
+
         typ_file.write_text(typst_source, encoding="utf-8")
 
         if not self._typst_available():
             raise DependencyError(
-                "typst CLI not found on PATH. "
-                "Install from https://typst.app/docs/"
+                f"typst CLI not found (searched: {self._binary}). "
+                "Set TYPST_BINARY env var or install from https://typst.app/docs/"
             )
 
         try:
             proc = subprocess.run(
-                ["typst", "compile", str(typ_file), str(pdf_file)],
+                [self._binary, "compile", str(typ_file), str(pdf_file)],
                 capture_output=True,
                 text=True,
                 timeout=self.render_timeout,
@@ -215,10 +228,97 @@ class PdfRenderer:
 
     # ── Internal helpers ─────────────────────────────────────────────
 
-    @staticmethod
-    def _typst_available() -> bool:
-        """Return ``True`` if ``typst`` is available on ``PATH``."""
-        return shutil.which("typst") is not None
+    # MIME type → file extension map for supported Typst image formats
+    _MIME_TO_EXT: dict[str, str] = {
+        "image/png": ".png",
+        "image/jpeg": ".jpg",
+        "image/jpg": ".jpg",
+        "image/gif": ".gif",
+        "image/webp": ".webp",
+    }
+    _SVG_MIME = {"image/svg+xml", "image/svg"}
+
+    @classmethod
+    def _fetch_image(cls, url: str) -> tuple[bytes, str] | None:
+        """Fetch *url* and return ``(data, ext)``, or ``None`` on failure.
+
+        If the response is SVG (unsupported by Typst), retries with ``.png``
+        appended to the URL path (works for shield.io and many badge services).
+        Returns ``None`` when neither attempt produces a usable raster image.
+        """
+        headers = {"User-Agent": "md-publishing-mcp/1.0"}
+
+        def _get(target: str) -> tuple[bytes, str] | None:
+            try:
+                req = urllib.request.Request(target, headers=headers)
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    ct = resp.headers.get("Content-Type", "").split(";")[0].strip().lower()
+                    data = resp.read()
+                if ct in cls._SVG_MIME:
+                    return None  # caller will retry as PNG
+                ext = cls._MIME_TO_EXT.get(ct, ".png")
+                return data, ext
+            except Exception:
+                return None
+
+        result = _get(url)
+        if result is not None:
+            return result
+
+        # SVG or error — retry as PNG (strip existing extension first, then add .png)
+        base = url.split("?")[0].rstrip("/")
+        # Remove known non-image suffix segments (e.g. "-blue", query params)
+        png_url = base + ".png"
+        if png_url != url:
+            result = _get(png_url)
+        return result  # None if both attempts failed
+
+    @classmethod
+    def _localise_remote_images(cls, typst_source: str, work_dir: Path) -> str:
+        """Download remote images referenced in *typst_source* into *work_dir*.
+
+        Uses Content-Type headers to determine the correct file extension.
+        SVG images (unsupported by Typst) are retried as PNG automatically.
+        Download failures are silently skipped (original URL left in place).
+        """
+        pattern = re.compile(r'#image\("(https?://[^"]+)"([^)]*)\)')
+
+        url_to_local: dict[str, str | None] = {}  # None → failed/unrenderable
+
+        for match in pattern.finditer(typst_source):
+            url = match.group(1)
+            if url in url_to_local:
+                continue
+            result = cls._fetch_image(url)
+            if result is not None:
+                data, ext = result
+                fname = hashlib.md5(url.encode()).hexdigest()[:16] + ext
+                (work_dir / fname).write_bytes(data)
+                url_to_local[url] = fname
+            else:
+                url_to_local[url] = None
+
+        # Replace in source (process longest URLs first to avoid partial matches)
+        for url in sorted(url_to_local, key=len, reverse=True):
+            local = url_to_local[url]
+            # Capture full #image("url" ...) call to replace
+            call_pattern = re.compile(
+                r'#image\("' + re.escape(url) + r'"([^)]*)\)'
+            )
+            if local is not None:
+                typst_source = call_pattern.sub(
+                    lambda m, loc=local: f'#image("{loc}"{m.group(1)})',
+                    typst_source,
+                )
+            else:
+                # SVG / failed download → italic text note
+                typst_source = call_pattern.sub("_[image unavailable]_", typst_source)
+
+        return typst_source
+
+    def _typst_available(self) -> bool:
+        """Return ``True`` if the configured typst binary is reachable."""
+        return shutil.which(self._binary) is not None
 
     def _cache_result(self, render_id: str, result: RenderResult) -> None:
         """Insert *result* into the cache, evicting stale or excess entries."""

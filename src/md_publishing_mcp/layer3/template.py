@@ -23,9 +23,9 @@ DEFAULT_MARGINS: dict[str, float] = {
 # Style presets — dictionaries of Typst variable overrides
 _PRESETS: dict[str, dict[str, Any]] = {
     "default": {
-        "font": ("Liberation Serif", "Times New Roman", "serif"),
+        "font": ("Times New Roman", "Liberation Serif", "serif"),
         "font_size": "11pt",
-        "heading_font": ("Liberation Serif", "Times New Roman", "serif"),
+        "heading_font": ("Times New Roman", "Liberation Serif", "serif"),
         "heading_level_1_size": "18pt",
         "heading_level_2_size": "14pt",
         "heading_color": "#1a1a1a",
@@ -45,9 +45,9 @@ _PRESETS: dict[str, dict[str, Any]] = {
         "page_number_align": "center",
     },
     "classic": {
-        "font": ("Liberation Serif", "Times New Roman", "serif"),
+        "font": ("Times New Roman", "Liberation Serif", "serif"),
         "font_size": "12pt",
-        "heading_font": ("Liberation Serif", "Times New Roman", "serif"),
+        "heading_font": ("Times New Roman", "Liberation Serif", "serif"),
         "heading_level_1_size": "22pt",
         "heading_level_2_size": "16pt",
         "heading_color": "#333333",
@@ -94,7 +94,7 @@ def _render_preset_code(preset: dict[str, Any]) -> str:
     justify = "true" if preset.get("justify", True) else "false"
     leading = preset.get("leading", "0.65em")
 
-    body_font = preset.get("font", ("Liberation Serif", "Times New Roman", "serif"))
+    body_font = preset.get("font", ("Times New Roman", "Liberation Serif", "serif"))
     heading_font = preset.get("heading_font", body_font)
 
     font_str = _render_font_tuple(body_font)
@@ -106,10 +106,10 @@ def _render_preset_code(preset: dict[str, Any]) -> str:
     lines = [
         f"#set text(font: {font_str}, size: {font_size})",
         f"#set par(justify: {justify}, leading: {leading})",
-        f"#show heading.where(level: 1): set text(font: {h_font_str}, size: {h1_size}, fill: {h_color})",
-        f"#show heading.where(level: 2): set text(font: {h_font_str}, size: {h2_size}, fill: {h_color})",
+        f"#show heading.where(level: 1): set text(font: {h_font_str}, size: {h1_size}, fill: rgb(\"{h_color}\"))",
+        f"#show heading.where(level: 2): set text(font: {h_font_str}, size: {h2_size}, fill: rgb(\"{h_color}\"))",
         f"#show list.item: set text(size: {font_size})",
-        "#show figure: set text(size: 9pt, fill: #666666)",
+        "#show figure: set text(size: 9pt, fill: rgb(\"#666666\"))",
     ]
     return "\n".join(lines)
 
@@ -220,7 +220,7 @@ class TemplateManager:
         parts.append("// Heading level 1")
         parts.append(
             f"#show heading.where(level: 1): set text(font: {h_font}, "
-            f"size: {h1_size}, fill: {h_color})"
+            f"size: {h1_size}, fill: rgb(\"{h_color}\"))"
         )
         parts.append("")
 
@@ -229,7 +229,7 @@ class TemplateManager:
         parts.append("// Heading level 2")
         parts.append(
             f"#show heading.where(level: 2): set text(font: {h_font}, "
-            f"size: {h2_size}, fill: {h_color})"
+            f"size: {h2_size}, fill: rgb(\"{h_color}\"))"
         )
         parts.append("")
 
@@ -240,7 +240,7 @@ class TemplateManager:
 
         # Figure captions
         parts.append("// Figure caption styling")
-        parts.append("#show figure: set text(size: 9pt, fill: #666666)")
+        parts.append("#show figure: set text(size: 9pt, fill: rgb(\"#666666\"))")
         parts.append("")
 
         # Page numbering
