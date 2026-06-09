@@ -7,7 +7,6 @@ name = "md-publishing-mcp"
 version = "0.1.0"
 description = "MCP server for publication-quality A4 PDF typesetting from Markdown"
 readme = "README.md"
-dynamic = ["version"]
 requires-python = ">=3.11"
 license = {text = "MIT"}
 urls = {homepage = "https://github.com/DCode1119/MarkdownPublishingMCP"}
