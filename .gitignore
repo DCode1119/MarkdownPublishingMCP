@@ -20,3 +20,12 @@ Thumbs.db
 .env
 .env.local
 .mcp/
+
+# Dev-only (NewProjectTemplate / local tooling)
+Publish/
+scripts/
+opencode.json
+.opencode/
+.sisyphus/
+.playwright-mcp/
+tests/pdf_output/
