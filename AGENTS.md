@@ -1,155 +1,19 @@
-# StationTradeRules Agent Guide
-
-## 1. Think Before Coding
-
-**추측하지 마세요. 혼란을 숨기지 마세요. 트레이드오프를 명시하세요.**
-
-구현하기 전에:
-- 자신의 가정을 명시적으로 밝히세요. 확실하지 않으면 질문하세요.
-- 여러 해석이 가능하다면, 조용히 하나를 선택하지 말고 모두 제시하세요.
-- 더 간단한 접근 방식이 있다면 말하세요. 정당할 때는 반대 의견을 제시하세요.
-- 불명확한 것이 있으면 멈추고, 무엇이 혼란스러운지 말한 후 질문하세요.
-
-## 2. Simplicity First
-
-**문제를 해결하는 최소한의 코드. 그 이상은 없습니다.**
-
-- 요청받은 기능 이상으로 추가하지 마세요.
-- 한 번만 사용할 코드에 추상화를 도입하지 마세요.
-- 요청받지 않은 "유연성"이나 "설정 가능성"을 추가하지 마세요.
-- 발생할 수 없는 시나리오에 대한 오류 처리를 하지 마세요.
-- 200줄을 작성했는데 50줄로 가능하다면 다시 작성하세요.
-
-스스로에게 질문하세요: "시니어 엔지니어가 이걸 과도하게 복잡하다고 말할까?" 그렇다면 단순화하세요.
-
-## 3. Surgical Changes
-
-**필요한 것만 건드리세요. 자신의 변경으로 인한 것만 정리하세요.**
-
-기존 코드를 편집할 때:
-- 인접한 코드, 주석, 포맷팅을 "개선"하지 마세요.
-- 고장나지 않은 것을 리팩터링하지 마세요.
-- 자신이 다르게 했을지라도 기존 스타일을 따르세요.
-- 관련 없는 죽은 코드를 발견하면 언급은 하되, 삭제하지 마세요.
-
-변경으로 인해 고립된 코드가 생겼을 때:
-- **자신의 변경**으로 사용되지 않게 된 import/변수/함수는 제거하세요.
-- 기존에 있던 죽은 코드는 요청받지 않는 한 제거하지 마세요.
-
-기준: 변경된 모든 줄은 사용자의 요청에서 직접 추적 가능해야 합니다.
-
-## 4. Goal-Driven Execution
-
-**성공 기준을 정의하세요. 확인될 때까지 반복하세요.**
-
-작업을 검증 가능한 목표로 변환하세요:
-- "검증 추가" → "잘못된 입력에 대한 테스트를 작성하고 통과시키기"
-- "버그 수정" → "버그를 재현하는 테스트를 작성하고 통과시키기"
-- "리팩터링" → "전후로 테스트가 통과하는지 확인"
-
-여러 단계로 구성된 작업은 간단한 계획을 명시하세요:
-```
-1. [단계] → 확인: [검증]
-2. [단계] → 확인: [검증]
-3. [단계] → 확인: [검증]
-```
-
-강력한 성공 기준을 세우면 독립적으로 반복 작업을 수행할 수 있습니다. 약한 기준("작동하게 만들기")은 지속적인 확인이 필요합니다.
-
-## 5. Source Of Truth
-
-- 프로젝트 루트의 `AGENTS.md`가 최우선 운영 지침입니다.
-- 상세 워크플로와 정책은 `Doc/` 디렉토리에 저장하세요.
-- `Doc/README.md`에서 전체 문서 맵을 확인하세요.
-- 문서 추가/변경/삭제 시 관련 참조를 함께 업데이트하세요.
-- 문서 수정 시 버전 번호와 최종 수정일을 갱신하세요.
-
-## 6. Communication Style
-
-- 한국어(존댓말)를 기본으로 사용합니다. 간결하고 직설적인 표현을 선호합니다.
-- 불필요한 서두나 맺음말 없이 본론부터 말합니다.
-- 사용자의 질문에 1-3문장으로 핵심만 응답하며, 요청 시 상세 설명 가능합니다.
-- 감정 표현이나 이모지는 사용자가 먼저 꺼낼 때만 사용합니다.
-- 확인된 사실과 추측을 명확히 구분하여 전달합니다.
-- "확인하지 않았습니다", "현재 정보로는 확인할 수 없습니다"처럼 정확하지 않은 내용은 솔직하게 말합니다.
-- 사용자가 특정 경로, 파일, 스크린샷을 제공하면 그 출처를 먼저 직접 확인한 후 답변합니다.
-- 세션이 끝난 후 후속 작업을 유도하는 질문을 던지지 마세요.
-
-## 7. Document Workflow
-
-- `AGENTS.md`는 핵심 운영 지침만 유지하고, 상세 내용은 `Doc/`으로 분리하세요.
-- 문서 업데이트 시:
-  1. 가장 구체적인 문서부터 업데이트한 후 상위 요약 문서를 갱신하세요.
-  2. 문서 변경 시 관련 문서들의 참조가 최신인지 확인하세요.
-  3. 문서 버전 번호(`Revision`)와 최종 수정일을 증가시키세요.
-
-## 8. Working Rules
-
-- 작고 검증 가능한 변경을 선호하세요.
-- 기능 범위 확장(scope creep)을 피하세요.
-- 프로젝트의 기존 컨벤션과 스타일을 일관되게 따르세요.
-- 중요한 범위 결정은 `Doc/`에 기록하세요.
-- 세션 복원 시 `AGENTS.md` → `Doc/README.md` → 최신 작업 로그 순서로 읽으세요.
-
-## 9. MCP File Editing Tools
-
-이 프로젝트는 기본 write/edit 도구 대신 다음 MCP 서버를 통해 파일을 수정합니다:
-
-### hashfile (hashfile-mcp)
-컨텐츠 해시 앵커 기반 정밀 파일 편집. 수정 위치가 파일 변경에 흔들리지 않음.
-- `write_text_file` — 새 파일 생성/덮어쓰기 (기본 `write` 대체)
-- `edit_text_file` — 해시 앵커 기반 수정: `replace`, `insert_after`, `insert_before`, `delete` (기본 `edit` 대체)
-- `read_multiple_files` — 다중 파일 배치 읽기
-- `create_directory`, `move_file` — 파일시스템 작업
-
-### multi-edit (@essentialai/mcp-multi-edit)
-다중 find-replace를 atomic하게 처리. 실패 시 rollback, 자동 `.bak` 백업.
-- `multi_edit` — 단일 파일에 여러 find-replace를 한 번에
-- `multi_edit_files` — 여러 파일에 atomic batch edit + rollback
-
-### github (GitHub MCP Server)
-GitHub API 통합 — 리포지토리 관리, PR/이슈, 파일 작업, 검색.
-- `create_or_update_file` — 파일 생성/수정 및 커밋
-- `search_repositories` — 리포지토리 검색
-- `create_issue`, `create_pull_request` — 이슈/PR 생성
-- `push_files` — 여러 파일을 한 번에 푸시
-
-### memory-keeper (mcp-memory-keeper)
-세션 컨텍스트 지속성 관리. 긴 작업 세션에서 컨텍스트 손실 방지.
-- `context_save` — 현재 컨텍스트 저장
-- `context_get` — 저장된 컨텍스트 불러오기
-- `context_search` — 저장된 컨텍스트 검색
-- `context_checkpoint` — 체크포인트 생성/복원
-
-## 10. graphify — Knowledge Graph
-
-이 프로젝트는 `graphify-out/`에 지식 그래프를 보유하고 있습니다. 세션 간 지속성과 교차 문서 연결에 사용합니다.
-
-### 사용법
-- `/graphify query "<질문>"` — BFS 탐색으로 광범위한 컨텍스트 검색
-- `/graphify query "<질문>" --dfs` — DFS로 특정 경로 추적
-- `/graphify path "개념A" "개념B"` — 두 개념 간 최단 경로
-- `/graphify explain "개념이름"` — 특정 노드 설명
-- `/graphify .` — 전체 파이프라인 실행 (파일 변경 후)
-- `/graphify . --update` — 증분 업데이트 (변경된 파일만 재추출)
-
-### 규칙
-- 답변이 필요한 코드베이스 질문이 들어오면, 파일을 직접 읽기 전에 `graphify-out/GRAPH_REPORT.md`를 먼저 읽으세요.
-- `graphify-out/graph.html`을 브라우저에서 열면 인터랙티브 그래프를 볼 수 있습니다.
-- 새 문서를 추가한 후에는 `/graphify . --update`를 실행해 그래프를 갱신하세요.
-
-## 11. MCP Auto-Installation Protocol
+# MCP Auto-Installation Protocol
 
 **이 레포지토리의 MCP 서버(`md-publishing-mcp`)를 사용자가 요청하면, 에이전트가 자동으로 설치/등록해야 합니다.**
 
-### 설치 방법 (uvx — 권장)
+## 설치 방법 (uvx — 권장)
+
 ```bash
 uvx --from git+https://github.com/DCode1119/MarkdownPublishingMCP md-publishing-mcp
 ```
+
 `uvx`는 `uv`에 내장된 도구로, PyPI 또는 git URL에서 패키지를 자동 다운로드 후 실행합니다.
 
-### opencode.json 등록
+## opencode.json 등록
+
 프로젝트 루트의 `opencode.json`에 다음 항목을 추가해야 합니다:
+
 ```json
 {
   "mcp": {
@@ -162,19 +26,22 @@ uvx --from git+https://github.com/DCode1119/MarkdownPublishingMCP md-publishing-
 }
 ```
 
-### 에이전트 자동 설치 절차
+## 에이전트 자동 설치 절차
+
 1. 사용자가 "md-publishing-mcp" 또는 이 MCP 서버를 언급하면
 2. `customize-opencode` skill을 로드
 3. 프로젝트 루트의 `opencode.json`을 읽고 `md-publishing-mcp` 항목이 있는지 확인
 4. 없으면 위의 MCP 등록 블록을 `opencode.json`의 `mcp` 필드에 추가
 5. 추가 후 OpenCode가 자동으로 `uvx`를 통해 MCP 서버를 설치/실행
 
-### 수동 설치 (대안)
+## 수동 설치 (대안)
+
 ```bash
 git clone https://github.com/DCode1119/MarkdownPublishingMCP
 cd MarkdownPublishingMCP
 pip install -r requirements.txt
 ```
+
 ```json
 {
   "mcp": {
@@ -186,12 +53,3 @@ pip install -r requirements.txt
   }
 }
 ```
-
-## 12. Background Task Transparency
-
-**백그라운드 태스크 실행 중 사용자 입력 대기 시, 반드시 진행 중인 작업을 안내해야 합니다.**
-
-- `run_in_background=true`로 실행한 태스크가 완료되지 않은 상태에서 사용자 메시지가 들어오면, 응답 첫머리에 진행 중인 백그라운드 태스크 목록과 상태를 간략히 표시하세요.
-- 형식: `*[bg: server.py 구현 중...]` 형태로, 사용자가 에이전트가 조용히 일하고 있음을 인지할 수 있게 합니다.
-- 시스템 리마인더(<system-reminder>)가 사용자 메시지 입력 중에 도착해도, 사용자의 질문/분석/피드백을 백그라운드 태스크 결과 수집보다 우선 처리합니다.
-- 목적: 예방적 투명성. 사용자가 "지금 에이전트가 백그라운드에서 무언가 하고 있구나"를 알게 하여 혼란과 놀람을 방지합니다.
