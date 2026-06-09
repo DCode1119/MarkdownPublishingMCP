@@ -81,7 +81,7 @@ class CompositionEngine:
     # Thresholds (configurable)
     MIN_LINES_BREAK_BEFORE = 3        # orphan prevention
     TABLE_COLUMN_THRESHOLD = 6        # columns >= this -> landscape hint
-    CODE_LINE_THRESHOLD = 40          # code lines >= this -> break allowed
+    CODE_LINE_THRESHOLD = 15          # code lines >= this -> breakable (no avoid_page_break)
     IMAGE_WIDTH_FULL = 100.0          # full width %
     IMAGE_WIDTH_HALF = 48.0           # half width % for inline
 
@@ -120,7 +120,7 @@ class CompositionEngine:
                 hints.keep_with_next = True
                 prev_was_heading = False
 
-            # ─── Code block: avoid page break (unless very long) ───
+            # ─── Code block: keep short blocks on one page ───────────────
             if block_type == "code_block":
                 code_block = block  # type: ignore[assignment]
                 line_count = code_block.code.count("\n") + 1
